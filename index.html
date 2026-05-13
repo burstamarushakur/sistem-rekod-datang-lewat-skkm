@@ -1,286 +1,482 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rekod Datang Lewat</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 15px; background-color: #f9f9f9; margin: 0; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Datang Lewat SKKM</title>
+    <!-- Tailwind CSS untuk Design Dashboard -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk Ikon -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    /* Style untuk Logo HEM */
-    .header-container { text-align: center; margin-bottom: 15px; }
-    .logo-hem { max-width: 120px; height: auto; margin-bottom: 10px; }
-    
-    h2 { text-align: center; color: #1e3a8a; margin-top: 0; font-size: 20px;}
-    label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
-    select, input[type="date"], input[type="text"] { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
-    
-    /* Style untuk senarai murid yang ada pangkah */
-    .murid-item { display: flex; justify-content: space-between; align-items: center; background: #ffebee; padding: 10px; margin-top: 8px; border-radius: 5px; border-left: 4px solid #f44336; font-size: 16px;}
-    .btn-pangkah { background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px;}
-    
-    .btn-submit { width: 100%; background: #1e3a8a; color: white; padding: 14px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin-top: 25px; cursor: pointer; }
-    
-    /* ========================================= */
-    /* ANIMASI & OVERLAY (LOADING & SELESAI)     */
-    /* ========================================= */
-    .overlay {
-      display: none; /* Sembunyi secara lalai */
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.95);
-      z-index: 1000;
-      justify-content: center; align-items: center; flex-direction: column;
-      text-align: center; padding: 20px; box-sizing: border-box;
-    }
-    .overlay p { font-size: 18px; font-weight: bold; color: #1e3a8a; margin-top: 20px; line-height: 1.5; }
-    .btn-tutup { margin-top: 30px; padding: 12px 30px; background: #1e3a8a; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
-    
-    /* Getaran (Vibrate) untuk Loading */
-    @keyframes getar {
-      0% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-      100% { transform: translate(0); }
-    }
-    .animasi-getar { animation: getar 0.3s infinite; }
-
-    /* Degupan (Heartbeat) untuk Selesai */
-    @keyframes degup {
-      0% { transform: scale(1); }
-      15% { transform: scale(1.15); }
-      30% { transform: scale(1); }
-      45% { transform: scale(1.15); }
-      60% { transform: scale(1); }
-      100% { transform: scale(1); }
-    }
-    .animasi-degup { animation: degup 1.5s infinite; }
-  </style>
-</head>
-<body>
-
-<!-- Skrin Pop-up Loading -->
-<div id="loadingOverlay" class="overlay">
-  <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Loading" class="logo-hem animasi-getar">
-  <p>PEREKODAN SEDANG LOADING,<br>KESABARAN ANDA AMATLAH DIHARGAI</p>
-</div>
-
-<!-- Skrin Pop-up Selesai -->
-<div id="successOverlay" class="overlay">
-  <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Selesai" class="logo-hem animasi-degup">
-  <p>GPK HEM BERTERIMA KASIH<br>ATAS BANTUAN ANDA</p>
-  <button class="btn-tutup" onclick="tutupSuccess()">Tutup</button>
-</div>
-
-<div class="container">
-  
-  <div class="header-container">
-    <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Unit HEM" class="logo-hem">
-    <h2>UNIT HEM - REKOD DATANG LEWAT</h2>
-  </div>
-  
-  <label>Tarikh:</label>
-  <input type="date" id="tarikhInput">
-
-  <label>Kelas:</label>
-  <select id="kelasSelect" onchange="pilihKelas()">
-    <option value="">-- Sila Tunggu, Sedang Muat Turun Data --</option>
-  </select>
-
-  <label>Pilih Murid Yang Lewat:</label>
-  <select id="muridSelect" onchange="tambahMurid()">
-    <option value="">-- Pilih Kelas Dahulu --</option>
-  </select>
-
-  <label style="margin-top:25px; border-bottom: 2px solid #ccc; padding-bottom:5px;">Senarai Murid Lewat Terpilih:</label>
-  <div id="senaraiTerpilih">
-    <p style="color:#777; font-size:14px; font-style:italic;">Belum ada murid dipilih.</p>
-  </div>
-
-  <label style="margin-top:25px;">Alasan Kelewatan:</label>
-  <select id="alasanSelect" onchange="checkLainLain()">
-    <option value="">-- Sila Pilih Alasan --</option>
-    <option value="Bangun lewat tidur">1. Bangun lewat tidur</option>
-    <option value="Kesesakan lalu lintas">2. Kesesakan lalu lintas</option>
-    <option value="Kenderaan rosak atau masalah pengangkutan">3. Kenderaan rosak atau masalah pengangkutan</option>
-    <option value="Menunggu ibu bapa atau penjaga bersiap">4. Menunggu ibu bapa atau penjaga bersiap</option>
-    <option value="Ibubapa baru habis kerja malam">5. Ibubapa baru habis kerja malam</option>
-    <option value="Adik-beradik lain perlu dihantar dahulu">6. Adik-beradik lain perlu dihantar dahulu</option>
-    <option value="Tertidur semula selepas bangun">7. Tertidur semula selepas bangun</option>
-    <option value="Terlupa membawa buku atau barang sekolah lalu berpatah balik">8. Terlupa bawa buku/barang lalu patah balik</option>
-    <option value="Jarak rumah jauh dari sekolah">9. Jarak rumah jauh dari sekolah</option>
-    <option value="Kecemasan kecil di rumah">10. Kecemasan kecil di rumah</option>
-    <option value="Tidur lewat malam kerana menyiapkan kerja sekolah atau aktiviti keluarga">11. Tidur lewat malam atas urusan kerja sekolah/keluarga</option>
-    <option value="Lain-lain">12. Lain-lain (Sila nyatakan)</option>
-  </select>
-
-  <div id="kotakLainLain" style="display: none; margin-top:10px;">
-    <label>Sila nyatakan sebab lain:</label>
-    <input type="text" id="alasanLainInput" placeholder="Contoh: Terlepas bas...">
-  </div>
-
-  <button class="btn-submit" id="btnHantar" onclick="hantarData()">Hantar Rekod Kelewatan</button>
-
-</div>
-
-<script>
-  // Link API Google Apps Script
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbyTZOj4xNOrPUVIWMX7HepysLPFvbR3fGu_ACPE4CpwuPnwVVqKKjdHhjhn5xJZKmub/exec'; 
-
-  let dataKelasKeseluruhan = {}; 
-  let senaraiMuridLewat = []; 
-
-  window.onload = function() {
-    document.getElementById('tarikhInput').valueAsDate = new Date();
-    
-    fetch(scriptURL + '?action=getClasses')
-      .then(response => response.json())
-      .then(result => {
-        if(result.status === 'success') {
-          dataKelasKeseluruhan = result.data;
-          let dropdownKelas = document.getElementById('kelasSelect');
-          dropdownKelas.innerHTML = '<option value="">-- Sila Pilih Kelas --</option>';
-          
-          for (let kelas in dataKelasKeseluruhan) {
-            let option = document.createElement('option');
-            option.value = kelas;
-            option.text = kelas;
-            dropdownKelas.add(option);
-          }
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching classes:', error);
-        document.getElementById('kelasSelect').innerHTML = '<option value="">-- Gagal Muat Turun Data --</option>';
-      });
-  };
-
-  function pilihKelas() {
-    let kelasDipilih = document.getElementById('kelasSelect').value;
-    let dropdownMurid = document.getElementById('muridSelect');
-    
-    if (kelasDipilih && dataKelasKeseluruhan[kelasDipilih]) {
-      dropdownMurid.innerHTML = '<option value="">-- Pilih Nama Murid --</option>';
-      let senarai = dataKelasKeseluruhan[kelasDipilih];
-      
-      senarai.forEach(function(nama) {
-        let option = document.createElement('option');
-        option.value = nama;
-        option.text = nama;
-        dropdownMurid.add(option);
-      });
-    } else {
-      dropdownMurid.innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
-    }
-  }
-
-  function tambahMurid() {
-    let namaDipilih = document.getElementById('muridSelect').value;
-    if (namaDipilih !== "" && !senaraiMuridLewat.includes(namaDipilih)) {
-      senaraiMuridLewat.push(namaDipilih);
-      paparSenaraiTerpilih();
-    }
-    document.getElementById('muridSelect').value = "";
-  }
-
-  function buangNama(nama) {
-    senaraiMuridLewat = senaraiMuridLewat.filter(item => item !== nama);
-    paparSenaraiTerpilih();
-  }
-
-  function paparSenaraiTerpilih() {
-    let divSenarai = document.getElementById('senaraiTerpilih');
-    if (senaraiMuridLewat.length === 0) {
-      divSenarai.innerHTML = '<p style="color:#777; font-size:14px; font-style:italic;">Belum ada murid dipilih.</p>';
-      return;
-    }
-    
-    let html = '';
-    senaraiMuridLewat.forEach(function(nama) {
-      html += '<div class="murid-item">';
-      html += '<span>' + nama + '</span>';
-      html += '<button class="btn-pangkah" onclick="buangNama(\'' + nama + '\')">❌</button>';
-      html += '</div>';
-    });
-    divSenarai.innerHTML = html;
-  }
-
-  function checkLainLain() {
-    let alasan = document.getElementById('alasanSelect').value;
-    let kotak = document.getElementById('kotakLainLain');
-    if (alasan === 'Lain-lain') {
-      kotak.style.display = 'block';
-    } else {
-      kotak.style.display = 'none';
-    }
-  }
-
-  // Fungsi tutup pop-up berjaya
-  function tutupSuccess() {
-    document.getElementById('successOverlay').style.display = 'none';
-  }
-
-  function hantarData() {
-    let tarikh = document.getElementById('tarikhInput').value;
-    let kelas = document.getElementById('kelasSelect').value;
-    let alasan = document.getElementById('alasanSelect').value;
-    let alasanLain = document.getElementById('alasanLainInput').value;
-
-    if (!kelas || senaraiMuridLewat.length === 0 || !alasan) {
-      alert("Sila pastikan kelas, nama murid dan alasan telah dipilih!");
-      return;
-    }
-
-    // Tunjuk pop-up bergetar (Loading)
-    document.getElementById('loadingOverlay').style.display = 'flex';
-
-    let dataPayload = {
-      action: 'simpanLewat',
-      payload: {
-        tarikh: tarikh,
-        kelas: kelas,
-        bilLewat: senaraiMuridLewat.length,
-        namaLewat: senaraiMuridLewat,
-        alasan: alasan,
-        alasanLain: alasanLain
-      }
-    };
-
-    fetch(scriptURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(dataPayload)
-    })
-    .then(response => response.json())
-    .then(result => {
-      // Sorok pop-up loading
-      document.getElementById('loadingOverlay').style.display = 'none';
-      
-      if(result.status === 'success') {
-        // Tunjuk pop-up berdegup (Berjaya)
-        document.getElementById('successOverlay').style.display = 'flex';
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0fdf4; }
         
-        // Reset borang
-        senaraiMuridLewat = [];
-        paparSenaraiTerpilih();
-        document.getElementById('kelasSelect').value = "";
-        document.getElementById('muridSelect').innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
-        document.getElementById('alasanSelect').value = "";
-        document.getElementById('kotakLainLain').style.display = 'none';
-        document.getElementById('alasanLainInput').value = "";
-      }
-    })
-    .catch(error => {
-      document.getElementById('loadingOverlay').style.display = 'none';
-      console.error('Error!', error.message);
-      alert("Terdapat ralat semasa menghantar data. Sila cuba lagi.");
-    });
-  }
-</script>
+        /* Animasi Getaran (Loading) */
+        @keyframes getar {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, 3px); }
+            40% { transform: translate(-3px, -3px); }
+            60% { transform: translate(3px, 3px); }
+            80% { transform: translate(3px, -3px); }
+            100% { transform: translate(0); }
+        }
+        .animasi-getar { animation: getar 0.2s infinite; }
 
+        /* Animasi Degupan Jantung (Selesai) */
+        @keyframes degup {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.2); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.2); }
+            60% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        .animasi-degup { animation: degup 1.5s infinite; }
+
+        /* Overlay Background */
+        .overlay-bg {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Tag Nama Murid (Design Sebijik SKSA) */
+        .tag-murid {
+            display: inline-flex;
+            align-items: center;
+            background-color: #fee2e2; /* Pink/Red cair */
+            color: #dc2626; /* Merah pekat */
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            margin: 0.25rem;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 text-slate-700">
+
+    <!-- OVERLAY LOADING -->
+    <div id="loadingOverlay" class="fixed inset-0 overlay-bg z-50 flex-col items-center justify-center text-center px-4" style="display: flex;">
+        <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Loading" class="w-32 md:w-40 mb-6 animasi-getar">
+        <h2 class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed">
+            PEREKODAN SEDANG LOADING,<br>KESABARAN ANDA AMATLAH DIHARGAI
+        </h2>
+    </div>
+
+    <!-- OVERLAY BERJAYA -->
+    <div id="successOverlay" class="fixed inset-0 overlay-bg z-50 hidden flex-col items-center justify-center text-center px-4">
+        <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Selesai" class="w-32 md:w-40 mb-6 animasi-degup">
+        <h2 class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed mb-8">
+            GPK HEM BERTERIMA KASIH<br>ATAS BANTUAN ANDA
+        </h2>
+        <button onclick="tutupSuccess()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Tutup & Kembali ke Dashboard
+        </button>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- HEADER SECTION -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 border border-slate-100">
+            <div class="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+                <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo SKKM" class="w-24 h-auto drop-shadow-md">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">DASHBOARD DATANG LEWAT SKKM</h1>
+                    <p class="text-slate-500 font-medium tracking-widest text-sm uppercase mt-1">UNIT HEM, MUAR JOHOR</p>
+                </div>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-inner">
+                <i class="far fa-calendar-alt text-xl"></i> 
+                <span id="displayDate" class="text-lg">--/--/----</span>
+            </div>
+        </div>
+
+        <!-- STATS SECTION -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Card 1 -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex flex-col justify-center items-center">
+                <p class="text-xs font-bold text-slate-400 tracking-widest mb-2 uppercase">Status Pengisian</p>
+                <div class="flex items-baseline gap-2 text-slate-800">
+                    <span id="statKelasSelesai" class="text-4xl font-extrabold">0</span>
+                    <span class="text-xl font-bold text-slate-400">/</span>
+                    <span id="statTotalKelas" class="text-2xl font-bold">0</span>
+                    <span class="text-sm font-medium text-slate-500 ml-1">Kelas</span>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-red-50 rounded-2xl shadow-sm p-6 border border-red-100 flex flex-col justify-center items-center">
+                <p class="text-xs font-bold text-red-400 tracking-widest mb-2 uppercase">Jumlah Datang Lewat</p>
+                <div class="flex items-baseline gap-2 text-red-600">
+                    <span id="statTotalLewat" class="text-4xl font-extrabold">0</span>
+                    <span class="text-sm font-bold text-red-400 ml-1">Murid</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE SECTION -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100">
+                <h3 class="text-xs font-bold text-slate-500 tracking-widest uppercase">Senarai Kelas Harian</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-white">
+                            <th class="p-5 w-40">Nama Kelas</th>
+                            <th class="p-5 w-32 text-center">Status</th>
+                            <th class="p-5 w-32 text-center">Bil Lewat</th>
+                            <th class="p-5 min-w-[300px]">Nama Murid & Alasan</th>
+                            <th class="p-5 w-40 text-center">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-50">
+                        <!-- Content dijana melalui JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL KEMASKINI -->
+    <div id="modalKemaskini" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm z-40 hidden items-center justify-center px-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                    <h3 class="font-extrabold text-lg text-slate-800">Kemaskini Rekod Lewat</h3>
+                    <p class="text-sm font-bold text-indigo-600" id="modalNamaKelas">NAMA KELAS</p>
+                </div>
+                <button onclick="tutupModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                
+                <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">1. Pilih Nama Murid</label>
+                        <select id="inputNamaMurid" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
+                            <option value="">-- Sila Pilih Murid --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">2. Pilih Alasan</label>
+                        <select id="inputAlasan" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
+                            <option value="">-- Sila Pilih Alasan --</option>
+                            <option value="Bangun lewat tidur">Bangun lewat tidur</option>
+                            <option value="Kesesakan lalu lintas">Kesesakan lalu lintas</option>
+                            <option value="Kenderaan rosak">Kenderaan rosak / masalah pengangkutan</option>
+                            <option value="Menunggu ibubapa">Menunggu ibu bapa / penjaga bersiap</option>
+                            <option value="Ibubapa kerja malam">Ibubapa baru habis kerja malam</option>
+                            <option value="Hantar adik-beradik">Adik-beradik lain perlu dihantar dahulu</option>
+                            <option value="Tertidur semula">Tertidur semula selepas bangun</option>
+                            <option value="Tertinggal barang">Terlupa bawa buku/barang lalu patah balik</option>
+                            <option value="Jarak jauh">Jarak rumah jauh dari sekolah</option>
+                            <option value="Kecemasan rumah">Kecemasan kecil di rumah</option>
+                            <option value="Tidur lewat tugas">Tidur lewat urusan sekolah/keluarga</option>
+                            <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
+
+                    <button onclick="tambahKeSenarai()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <i class="fas fa-plus-circle"></i> Tambah Murid Ke Senarai
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 border-b pb-2">Senarai Murid Lewat Terpilih (Belum Disimpan)</label>
+                    <div id="ruanganTagMurid" class="flex flex-wrap gap-2 min-h-[60px] bg-slate-50 p-3 rounded-xl border border-slate-200 border-dashed items-center">
+                        <p class="text-sm text-slate-400 italic w-full text-center" id="teksTiadaMurid">Tiada murid dipilih. Jika tiada yang lewat, terus klik Hantar.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
+                <button onclick="tutupModal()" class="px-6 py-2.5 rounded-lg font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition-colors">
+                    Batal
+                </button>
+                <button onclick="simpanRekodKelas()" class="px-8 py-2.5 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-transform transform hover:scale-105">
+                    Hantar Rekod
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==============================================================================
+        // URL WEB APP GAS - JANGAN USIK SINI DAH
+        // ==============================================================================
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyTZOj4xNOrPUVIWMX7HepysLPFvbR3fGu_ACPE4CpwuPnwVVqKKjdHhjhn5xJZKmub/exec'; 
+        
+        let senaraiKelasGlobal = {}; // { "4 Bestari": ["Ali", "Abu"], ... }
+        let rekodHariIni = {}; // { "4 Bestari": { bil: 2, nama: ["Ali - Jammed", "Abu - Bangun Lewat"] } }
+        let tarikhSemasaString = ""; // YYYY-MM-DD
+        
+        let kelasYangSedangDikemaskini = "";
+        let arrayMuridSementara = []; // Array of string: "NAMA - ALASAN"
+
+        window.onload = function() {
+            setTarikhHariIni();
+            muatTurunData();
+        };
+
+        function setTarikhHariIni() {
+            // Dapatkan tarikh ikut zon masa Malaysia (seboleh mungkin)
+            let harini = new Date();
+            let dd = String(harini.getDate()).padStart(2, '0');
+            let mm = String(harini.getMonth() + 1).padStart(2, '0'); // January is 0!
+            let yyyy = harini.getFullYear();
+            
+            tarikhSemasaString = yyyy + "-" + mm + "-" + dd;
+            document.getElementById('displayDate').innerText = dd + "/" + mm + "/" + yyyy;
+        }
+
+        function tunjukLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+        function sembunyiLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+        function tunjukSuccess() { document.getElementById('successOverlay').style.display = 'flex'; }
+        function tutupSuccess() { document.getElementById('successOverlay').style.display = 'none'; }
+
+        // Minta data kelas & rekod dari Apps Script serentak
+        async function muatTurunData() {
+            tunjukLoading();
+            try {
+                const resKelas = fetch(scriptURL + '?action=getClasses');
+                const resRekod = fetch(scriptURL + '?action=getRekodLewat');
+
+                const [dataKelasRes, dataRekodRes] = await Promise.all([resKelas, resRekod]);
+                
+                const jsonKelas = await dataKelasRes.json();
+                const jsonRekod = await dataRekodRes.json();
+
+                if(jsonKelas.status === 'success') {
+                    senaraiKelasGlobal = jsonKelas.data;
+                }
+
+                // Tapis rekod hari ini sahaja
+                rekodHariIni = {};
+                if(jsonRekod.status === 'success' && jsonRekod.data) {
+                    jsonRekod.data.forEach(rekod => {
+                        // rekod.tarikh dari GAS mungkin ada format macam-macam, kita try match awal
+                        if(rekod.tarikh && rekod.tarikh.includes(tarikhSemasaString)) {
+                            // Kalau kelas tu dah ada, kita override ambil yang latest (sebab GAS akan append bawah)
+                            rekodHariIni[rekod.kelas] = {
+                                bil: rekod.bilLewat,
+                                namaArray: rekod.namaLewat // Array dari GAS
+                            };
+                        }
+                    });
+                }
+
+                binaJadualDashboard();
+                sembunyiLoading();
+
+            } catch (error) {
+                console.error("Gagal muat turun data:", error);
+                alert("Terdapat masalah menyambung ke server. Sila refresh halaman.");
+                sembunyiLoading();
+            }
+        }
+
+        function binaJadualDashboard() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            let totalKelas = 0;
+            let kelasSelesai = 0;
+            let totalMuridLewat = 0;
+
+            // Sort kelas abjad
+            let keysKelas = Object.keys(senaraiKelasGlobal).sort();
+
+            keysKelas.forEach(kelas => {
+                totalKelas++;
+                let statusSelesai = rekodHariIni[kelas] ? true : false;
+                let bilLewat = statusSelesai ? rekodHariIni[kelas].bil : "-";
+                let listNama = statusSelesai ? rekodHariIni[kelas].namaArray : [];
+
+                if(statusSelesai) {
+                    kelasSelesai++;
+                    // Cek kalau array string "Tiada", kita tak tambah count
+                    if(bilLewat !== "-" && bilLewat > 0) {
+                        totalMuridLewat += parseInt(bilLewat);
+                    }
+                }
+
+                // Bina HTML Tag Nama
+                let tagHTML = "";
+                if(statusSelesai && listNama.length > 0 && listNama[0] !== "Tiada") {
+                    listNama.forEach(nama => {
+                        tagHTML += `<span class="tag-murid shadow-sm">${nama}</span>`;
+                    });
+                }
+
+                let statusBadge = statusSelesai 
+                    ? `<div class="flex flex-col items-center"><i class="fas fa-check-circle text-emerald-500 text-xl mb-1"></i><span class="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Selesai</span></div>` 
+                    : `<div class="flex flex-col items-center"><i class="fas fa-minus-circle text-slate-300 text-xl mb-1"></i><span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Belum</span></div>`;
+
+                let row = `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="p-5 font-bold text-slate-700">${kelas}</td>
+                        <td class="p-5 text-center">${statusBadge}</td>
+                        <td class="p-5 text-center text-lg font-extrabold ${statusSelesai && bilLewat > 0 ? 'text-red-500' : 'text-slate-400'}">${bilLewat}</td>
+                        <td class="p-5">${tagHTML}</td>
+                        <td class="p-5 text-center">
+                            <button onclick="bukaModal('${kelas}')" class="bg-slate-100 hover:bg-indigo-600 text-slate-600 hover:text-white text-xs font-bold py-2 px-4 rounded-full transition-all uppercase tracking-wider shadow-sm group-hover:bg-indigo-100 group-hover:text-indigo-700">
+                                Kemaskini
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            // Update Header Stats
+            document.getElementById('statTotalKelas').innerText = totalKelas;
+            document.getElementById('statKelasSelesai').innerText = kelasSelesai;
+            document.getElementById('statTotalLewat').innerText = totalMuridLewat;
+        }
+
+        // ==========================================
+        // LOGIK MODAL & KEMASKINI
+        // ==========================================
+
+        function bukaModal(kelas) {
+            kelasYangSedangDikemaskini = kelas;
+            arrayMuridSementara = [];
+            
+            document.getElementById('modalNamaKelas').innerText = kelas;
+            document.getElementById('modalKemaskini').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // block scrolling background
+
+            // Isi dropdown senarai nama kelas tersebut
+            let selectMurid = document.getElementById('inputNamaMurid');
+            selectMurid.innerHTML = '<option value="">-- Sila Pilih Murid --</option>';
+            
+            if(senaraiKelasGlobal[kelas]) {
+                senaraiKelasGlobal[kelas].forEach(nama => {
+                    let opt = document.createElement('option');
+                    opt.value = nama;
+                    opt.innerText = nama;
+                    selectMurid.appendChild(opt);
+                });
+            }
+
+            // Reset input alasan
+            document.getElementById('inputAlasan').value = "";
+            renderTagDalamModal();
+        }
+
+        function tutupModal() {
+            document.getElementById('modalKemaskini').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function tambahKeSenarai() {
+            let nama = document.getElementById('inputNamaMurid').value;
+            let alasan = document.getElementById('inputAlasan').value;
+
+            if(nama === "" || alasan === "") {
+                alert("Sila pilih Nama Murid dan Alasan terlebih dahulu!");
+                return;
+            }
+
+            // Cantumkan nama dan alasan siap-siap sebagai satu string ("Ali - Trafik Jem")
+            let gabungan = `${nama} (${alasan})`;
+
+            // Semak kalau dah ada dalam array
+            if(!arrayMuridSementara.includes(gabungan)) {
+                arrayMuridSementara.push(gabungan);
+                renderTagDalamModal();
+            }
+
+            // Reset dropdown
+            document.getElementById('inputNamaMurid').value = "";
+            document.getElementById('inputAlasan').value = "";
+        }
+
+        function buangNamaDariModal(index) {
+            arrayMuridSementara.splice(index, 1);
+            renderTagDalamModal();
+        }
+
+        function renderTagDalamModal() {
+            let ruangan = document.getElementById('ruanganTagMurid');
+            let teksKosong = document.getElementById('teksTiadaMurid');
+
+            if(arrayMuridSementara.length === 0) {
+                ruangan.innerHTML = '<p class="text-sm text-slate-400 italic w-full text-center" id="teksTiadaMurid">Tiada murid dipilih. Jika tiada yang lewat, terus klik Hantar.</p>';
+            } else {
+                ruangan.innerHTML = '';
+                arrayMuridSementara.forEach((item, index) => {
+                    // Tag ada butang X - SEBIJIK KEHENDAK USER
+                    ruangan.innerHTML += `
+                        <div class="tag-murid px-3 py-1.5 shadow-sm text-sm border border-red-200 gap-2">
+                            <span>${item}</span>
+                            <button onclick="buangNamaDariModal(${index})" class="bg-red-500 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center transition-colors">
+                                <i class="fas fa-times text-[10px]"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function simpanRekodKelas() {
+            tutupModal();
+            tunjukLoading();
+
+            // Sediakan payload
+            // Untuk memastikan Apps Script asal berfungsi tanpa error:
+            // payload.alasan akan dihantar dummy text, sebab alasan sebenar dah cantum dengan nama
+            let dataPayload = {
+                action: 'simpanLewat',
+                payload: {
+                    tarikh: tarikhSemasaString,
+                    kelas: kelasYangSedangDikemaskini,
+                    bilLewat: arrayMuridSementara.length,
+                    namaLewat: arrayMuridSementara,
+                    alasan: "Sila rujuk tag nama", 
+                    alasanLain: ""
+                }
+            };
+
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(dataPayload)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if(result.status === 'success') {
+                    // Berjaya simpan! Kita muat turun data latest balik supaya dashboard ter-update
+                    muatTurunData().then(() => {
+                        sembunyiLoading();
+                        tunjukSuccess(); // Tunjuk logo berdegup jantung tu
+                    });
+                } else {
+                    sembunyiLoading();
+                    alert("Ralat semasa menyimpan.");
+                }
+            })
+            .catch(error => {
+                sembunyiLoading();
+                console.error('Error!', error);
+                alert("Terdapat ralat semasa menghantar data. Sila semak sambungan internet.");
+            });
+        }
+    </script>
 </body>
 </html>
