@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekod Datang Lewat</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 15px; background-color: #f9f9f9; margin: 0; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+    
+    /* Style untuk Logo HEM */
+    .header-container { text-align: center; margin-bottom: 15px; }
+    .logo-hem { max-width: 120px; height: auto; margin-bottom: 10px; }
+    
+    h2 { text-align: center; color: #1e3a8a; margin-top: 0; font-size: 20px;}
+    label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
+    select, input[type="date"], input[type="text"] { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+    
+    /* Style untuk senarai murid yang ada pangkah */
+    .murid-item { display: flex; justify-content: space-between; align-items: center; background: #ffebee; padding: 10px; margin-top: 8px; border-radius: 5px; border-left: 4px solid #f44336; font-size: 16px;}
+    .btn-pangkah { background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px;}
+    
+    .btn-submit { width: 100%; background: #1e3a8a; color: white; padding: 14px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin-top: 25px; cursor: pointer; }
+    
+    /* ========================================= */
+    /* ANIMASI & OVERLAY (LOADING & SELESAI)     */
+    /* ========================================= */
+    .overlay {
+      display: none; /* Sembunyi secara lalai */
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 1000;
+      justify-content: center; align-items: center; flex-direction: column;
+      text-align: center; padding: 20px; box-sizing: border-box;
+    }
+    .overlay p { font-size: 18px; font-weight: bold; color: #1e3a8a; margin-top: 20px; line-height: 1.5; }
+    .btn-tutup { margin-top: 30px; padding: 12px 30px; background: #1e3a8a; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+    
+    /* Getaran (Vibrate) untuk Loading */
+    @keyframes getar {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+    .animasi-getar { animation: getar 0.3s infinite; }
+
+    /* Degupan (Heartbeat) untuk Selesai */
+    @keyframes degup {
+      0% { transform: scale(1); }
+      15% { transform: scale(1.15); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.15); }
+      60% { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+    .animasi-degup { animation: degup 1.5s infinite; }
+  </style>
+</head>
+<body>
+
+<!-- Skrin Pop-up Loading -->
+<div id="loadingOverlay" class="overlay">
+  <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Loading" class="logo-hem animasi-getar">
+  <p>PEREKODAN SEDANG LOADING,<br>KESABARAN ANDA AMATLAH DIHARGAI</p>
+</div>
+
+<!-- Skrin Pop-up Selesai -->
+<div id="successOverlay" class="overlay">
+  <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Selesai" class="logo-hem animasi-degup">
+  <p>GPK HEM BERTERIMA KASIH<br>ATAS BANTUAN ANDA</p>
+  <button class="btn-tutup" onclick="tutupSuccess()">Tutup</button>
+</div>
+
+<div class="container">
+  
+  <div class="header-container">
+    <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Unit HEM" class="logo-hem">
+    <h2>UNIT HEM - REKOD DATANG LEWAT</h2>
+  </div>
+  
+  <label>Tarikh:</label>
+  <input type="date" id="tarikhInput">
+
+  <label>Kelas:</label>
+  <select id="kelasSelect" onchange="pilihKelas()">
+    <option value="">-- Sila Tunggu, Sedang Muat Turun Data --</option>
+  </select>
+
+  <label>Pilih Murid Yang Lewat:</label>
+  <select id="muridSelect" onchange="tambahMurid()">
+    <option value="">-- Pilih Kelas Dahulu --</option>
+  </select>
+
+  <label style="margin-top:25px; border-bottom: 2px solid #ccc; padding-bottom:5px;">Senarai Murid Lewat Terpilih:</label>
+  <div id="senaraiTerpilih">
+    <p style="color:#777; font-size:14px; font-style:italic;">Belum ada murid dipilih.</p>
+  </div>
+
+  <label style="margin-top:25px;">Alasan Kelewatan:</label>
+  <select id="alasanSelect" onchange="checkLainLain()">
+    <option value="">-- Sila Pilih Alasan --</option>
+    <option value="Bangun lewat tidur">1. Bangun lewat tidur</option>
+    <option value="Kesesakan lalu lintas">2. Kesesakan lalu lintas</option>
+    <option value="Kenderaan rosak atau masalah pengangkutan">3. Kenderaan rosak atau masalah pengangkutan</option>
+    <option value="Menunggu ibu bapa atau penjaga bersiap">4. Menunggu ibu bapa atau penjaga bersiap</option>
+    <option value="Ibubapa baru habis kerja malam">5. Ibubapa baru habis kerja malam</option>
+    <option value="Adik-beradik lain perlu dihantar dahulu">6. Adik-beradik lain perlu dihantar dahulu</option>
+    <option value="Tertidur semula selepas bangun">7. Tertidur semula selepas bangun</option>
+    <option value="Terlupa membawa buku atau barang sekolah lalu berpatah balik">8. Terlupa bawa buku/barang lalu patah balik</option>
+    <option value="Jarak rumah jauh dari sekolah">9. Jarak rumah jauh dari sekolah</option>
+    <option value="Kecemasan kecil di rumah">10. Kecemasan kecil di rumah</option>
+    <option value="Tidur lewat malam kerana menyiapkan kerja sekolah atau aktiviti keluarga">11. Tidur lewat malam atas urusan kerja sekolah/keluarga</option>
+    <option value="Lain-lain">12. Lain-lain (Sila nyatakan)</option>
+  </select>
+
+  <div id="kotakLainLain" style="display: none; margin-top:10px;">
+    <label>Sila nyatakan sebab lain:</label>
+    <input type="text" id="alasanLainInput" placeholder="Contoh: Terlepas bas...">
+  </div>
+
+  <button class="btn-submit" id="btnHantar" onclick="hantarData()">Hantar Rekod Kelewatan</button>
+
+</div>
+
+<script>
+  // Link API Google Apps Script
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbyTZOj4xNOrPUVIWMX7HepysLPFvbR3fGu_ACPE4CpwuPnwVVqKKjdHhjhn5xJZKmub/exec'; 
+
+  let dataKelasKeseluruhan = {}; 
+  let senaraiMuridLewat = []; 
+
+  window.onload = function() {
+    document.getElementById('tarikhInput').valueAsDate = new Date();
+    
+    fetch(scriptURL + '?action=getClasses')
+      .then(response => response.json())
+      .then(result => {
+        if(result.status === 'success') {
+          dataKelasKeseluruhan = result.data;
+          let dropdownKelas = document.getElementById('kelasSelect');
+          dropdownKelas.innerHTML = '<option value="">-- Sila Pilih Kelas --</option>';
+          
+          for (let kelas in dataKelasKeseluruhan) {
+            let option = document.createElement('option');
+            option.value = kelas;
+            option.text = kelas;
+            dropdownKelas.add(option);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching classes:', error);
+        document.getElementById('kelasSelect').innerHTML = '<option value="">-- Gagal Muat Turun Data --</option>';
+      });
+  };
+
+  function pilihKelas() {
+    let kelasDipilih = document.getElementById('kelasSelect').value;
+    let dropdownMurid = document.getElementById('muridSelect');
+    
+    if (kelasDipilih && dataKelasKeseluruhan[kelasDipilih]) {
+      dropdownMurid.innerHTML = '<option value="">-- Pilih Nama Murid --</option>';
+      let senarai = dataKelasKeseluruhan[kelasDipilih];
+      
+      senarai.forEach(function(nama) {
+        let option = document.createElement('option');
+        option.value = nama;
+        option.text = nama;
+        dropdownMurid.add(option);
+      });
+    } else {
+      dropdownMurid.innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
+    }
+  }
+
+  function tambahMurid() {
+    let namaDipilih = document.getElementById('muridSelect').value;
+    if (namaDipilih !== "" && !senaraiMuridLewat.includes(namaDipilih)) {
+      senaraiMuridLewat.push(namaDipilih);
+      paparSenaraiTerpilih();
+    }
+    document.getElementById('muridSelect').value = "";
+  }
+
+  function buangNama(nama) {
+    senaraiMuridLewat = senaraiMuridLewat.filter(item => item !== nama);
+    paparSenaraiTerpilih();
+  }
+
+  function paparSenaraiTerpilih() {
+    let divSenarai = document.getElementById('senaraiTerpilih');
+    if (senaraiMuridLewat.length === 0) {
+      divSenarai.innerHTML = '<p style="color:#777; font-size:14px; font-style:italic;">Belum ada murid dipilih.</p>';
+      return;
+    }
+    
+    let html = '';
+    senaraiMuridLewat.forEach(function(nama) {
+      html += '<div class="murid-item">';
+      html += '<span>' + nama + '</span>';
+      html += '<button class="btn-pangkah" onclick="buangNama(\'' + nama + '\')">❌</button>';
+      html += '</div>';
+    });
+    divSenarai.innerHTML = html;
+  }
+
+  function checkLainLain() {
+    let alasan = document.getElementById('alasanSelect').value;
+    let kotak = document.getElementById('kotakLainLain');
+    if (alasan === 'Lain-lain') {
+      kotak.style.display = 'block';
+    } else {
+      kotak.style.display = 'none';
+    }
+  }
+
+  // Fungsi tutup pop-up berjaya
+  function tutupSuccess() {
+    document.getElementById('successOverlay').style.display = 'none';
+  }
+
+  function hantarData() {
+    let tarikh = document.getElementById('tarikhInput').value;
+    let kelas = document.getElementById('kelasSelect').value;
+    let alasan = document.getElementById('alasanSelect').value;
+    let alasanLain = document.getElementById('alasanLainInput').value;
+
+    if (!kelas || senaraiMuridLewat.length === 0 || !alasan) {
+      alert("Sila pastikan kelas, nama murid dan alasan telah dipilih!");
+      return;
+    }
+
+    // Tunjuk pop-up bergetar (Loading)
+    document.getElementById('loadingOverlay').style.display = 'flex';
+
+    let dataPayload = {
+      action: 'simpanLewat',
+      payload: {
+        tarikh: tarikh,
+        kelas: kelas,
+        bilLewat: senaraiMuridLewat.length,
+        namaLewat: senaraiMuridLewat,
+        alasan: alasan,
+        alasanLain: alasanLain
+      }
+    };
+
+    fetch(scriptURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(dataPayload)
+    })
+    .then(response => response.json())
+    .then(result => {
+      // Sorok pop-up loading
+      document.getElementById('loadingOverlay').style.display = 'none';
+      
+      if(result.status === 'success') {
+        // Tunjuk pop-up berdegup (Berjaya)
+        document.getElementById('successOverlay').style.display = 'flex';
+        
+        // Reset borang
+        senaraiMuridLewat = [];
+        paparSenaraiTerpilih();
+        document.getElementById('kelasSelect').value = "";
+        document.getElementById('muridSelect').innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
+        document.getElementById('alasanSelect').value = "";
+        document.getElementById('kotakLainLain').style.display = 'none';
+        document.getElementById('alasanLainInput').value = "";
+      }
+    })
+    .catch(error => {
+      document.getElementById('loadingOverlay').style.display = 'none';
+      console.error('Error!', error.message);
+      alert("Terdapat ralat semasa menghantar data. Sila cuba lagi.");
+    });
+  }
+</script>
+
+</body>
+</html>
