@@ -60,7 +60,7 @@
     <!-- OVERLAY LOADING -->
     <div id="loadingOverlay" class="fixed inset-0 overlay-bg z-50 flex-col items-center justify-center text-center px-4" style="display: flex;">
         <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Loading" class="w-32 md:w-40 mb-6 animasi-getar">
-        <h2 class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed">
+        <h2 id="teksLoading" class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed">
             PEREKODAN SEDANG LOADING,<br>KESABARAN ANDA AMATLAH DIHARGAI
         </h2>
     </div>
@@ -68,7 +68,7 @@
     <!-- OVERLAY BERJAYA -->
     <div id="successOverlay" class="fixed inset-0 overlay-bg z-50 hidden flex-col items-center justify-center text-center px-4">
         <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo Selesai" class="w-32 md:w-40 mb-6 animasi-degup">
-        <h2 class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed mb-8">
+        <h2 id="teksBerjaya" class="text-xl md:text-2xl font-bold text-blue-900 tracking-wide leading-relaxed mb-8">
             GPK HEM BERTERIMA KASIH<br>ATAS BANTUAN ANDA
         </h2>
         <button onclick="tutupSuccess()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition-transform transform hover:scale-105">
@@ -95,11 +95,17 @@
             </div>
         </div>
 
-        <!-- BUTANG UTAMA: ISI MURID DATANG LEWAT -->
-        <button onclick="bukaModalTambahBaru()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-lg py-5 rounded-2xl shadow-md transition-transform transform hover:-translate-y-1 flex justify-center items-center gap-3">
-            <i class="fas fa-plus-circle text-2xl"></i> 
-            ISI MURID DATANG LEWAT
-        </button>
+        <!-- BUTANG UTAMA: GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="bukaModalTambahBaru()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-lg py-5 rounded-2xl shadow-md transition-transform transform hover:-translate-y-1 flex justify-center items-center gap-3">
+                <i class="fas fa-plus-circle text-2xl"></i> 
+                ISI MURID DATANG LEWAT
+            </button>
+            <button onclick="bukaModalPDF()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-lg py-5 rounded-2xl shadow-md transition-transform transform hover:-translate-y-1 flex justify-center items-center gap-3">
+                <i class="fas fa-file-pdf text-2xl"></i> 
+                JANA LAPORAN PDF
+            </button>
+        </div>
 
         <!-- STATS SECTION -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -142,35 +148,29 @@
 
     </div>
 
-    <!-- MODAL (BORANG ISI MURID / KEMASKINI) -->
+    <!-- MODAL BORANG ISI MURID -->
     <div id="modalBorang" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm z-40 hidden items-center justify-center px-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
             <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="font-extrabold text-lg text-slate-800 uppercase" id="tajukModal">ISI MURID DATANG LEWAT</h3>
                 <button onclick="tutupModal()" class="text-slate-400 hover:text-red-500 transition-colors">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                
                 <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-xl space-y-4">
-                    
                     <div>
                         <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">1. Pilih Kelas</label>
                         <select id="modalPilihKelas" onchange="pilihKelasDalamModal()" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
                             <option value="">-- Sila Pilih Kelas --</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">2. Pilih Nama Murid</label>
                         <select id="modalPilihNama" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
                             <option value="">-- Pilih Kelas Dahulu --</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">3. Pilih Alasan</label>
                         <select id="modalPilihAlasan" onchange="periksaAlasanLain()" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
@@ -189,45 +189,60 @@
                             <option value="Lain-lain">Lain-lain</option>
                         </select>
                     </div>
-                    
-                    <!-- Kotak kalau pilih Lain-lain -->
                     <div id="kotakLainLain" class="hidden">
                         <input type="text" id="modalAlasanLain" placeholder="Sila nyatakan alasan..." class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
                     </div>
-
                     <button onclick="tambahKeSenarai()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 mt-2 rounded-lg transition-colors flex justify-center items-center gap-2 shadow-sm">
                         <i class="fas fa-plus"></i> Tambah Murid Ke Senarai
                     </button>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 border-b pb-2">Senarai Murid Lewat Terpilih</label>
                     <div id="ruanganTagMurid" class="flex flex-col gap-2 min-h-[60px] bg-slate-50 p-3 rounded-xl border border-slate-200 items-center">
                         <p class="text-sm text-slate-400 italic w-full text-center">Tiada murid dipilih.</p>
                     </div>
                 </div>
-
             </div>
-
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
-                <button onclick="tutupModal()" class="px-6 py-3 rounded-lg font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition-colors">
-                    Batal
-                </button>
-                <button onclick="simpanRekodMuridLewat()" class="px-8 py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-transform transform hover:scale-105">
-                    SIMPAN REKOD MURID LEWAT
+                <button onclick="tutupModal()" class="px-6 py-3 rounded-lg font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition-colors">Batal</button>
+                <button onclick="simpanRekodMuridLewat()" class="px-8 py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-transform transform hover:scale-105">SIMPAN REKOD</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PILIH TARIKH JANA PDF -->
+    <div id="modalPDF" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm z-40 hidden items-center justify-center px-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-emerald-50 px-6 py-4 border-b border-emerald-100 flex justify-between items-center">
+                <h3 class="font-extrabold text-lg text-emerald-800 uppercase"><i class="fas fa-file-pdf mr-2"></i> JANA PDF</h3>
+                <button onclick="tutupModalPDF()" class="text-emerald-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-slate-500">Pilih tarikh untuk menjana laporan PDF. Tarikh di masa hadapan tidak dibenarkan.</p>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Tarikh Laporan:</label>
+                    <input type="date" id="tarikhPilihPDF" class="w-full p-3 border border-emerald-200 rounded-lg text-lg bg-white focus:ring-2 focus:ring-emerald-400 outline-none font-bold text-slate-700 cursor-pointer">
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
+                <button onclick="tutupModalPDF()" class="px-6 py-3 rounded-lg font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition-colors">Batal</button>
+                <button onclick="mulaJanaPDF()" class="px-8 py-3 rounded-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-transform transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-download"></i> JANA & MUAT TURUN
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // JANGAN USIK SINI DAH
+        // URL WEB APP KEKAL SAMA MACAM KAU BAGI
         const scriptURL = 'https://script.google.com/macros/s/AKfycbyTZOj4xNOrPUVIWMX7HepysLPFvbR3fGu_ACPE4CpwuPnwVVqKKjdHhjhn5xJZKmub/exec'; 
         
         let senaraiKelasGlobal = {}; 
         let rekodHariIni = {}; 
         let tarikhSemasaString = ""; 
+        let tarikhHariIniSahaja = ""; 
         
         let modeKemaskini = false;
         let kelasTargetKemaskini = null;
@@ -245,7 +260,10 @@
             let yyyy = harini.getFullYear();
             
             tarikhSemasaString = yyyy + "-" + mm + "-" + dd;
+            tarikhHariIniSahaja = tarikhSemasaString; 
             document.getElementById('datePicker').value = tarikhSemasaString;
+            
+            document.getElementById('tarikhPilihPDF').max = tarikhHariIniSahaja;
         }
 
         function tukarTarikh() {
@@ -253,9 +271,16 @@
             muatTurunData();
         }
 
-        function tunjukLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+        function tunjukLoading(teks = "PEREKODAN SEDANG LOADING,<br>KESABARAN ANDA AMATLAH DIHARGAI") { 
+            document.getElementById('teksLoading').innerHTML = teks;
+            document.getElementById('loadingOverlay').style.display = 'flex'; 
+        }
         function sembunyiLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
-        function tunjukSuccess() { document.getElementById('successOverlay').style.display = 'flex'; }
+        
+        function tunjukSuccess(teks = "GPK HEM BERTERIMA KASIH<br>ATAS BANTUAN ANDA") { 
+            document.getElementById('teksBerjaya').innerHTML = teks;
+            document.getElementById('successOverlay').style.display = 'flex'; 
+        }
         function tutupSuccess() { document.getElementById('successOverlay').style.display = 'none'; }
 
         async function muatTurunData() {
@@ -278,7 +303,6 @@
                 if(jsonRekod.status === 'success' && jsonRekod.data) {
                     jsonRekod.data.forEach(rekod => {
                         if(rekod.tarikh && rekod.tarikh.includes(tarikhSemasaString)) {
-                            // Asingkan data Alasan yang ditarik dari DB. DB simpan "Sebab 1, Sebab 2"
                             let alasanDB = rekod.alasan || "";
                             let arrayAlasan = alasanDB.split(',').map(a => a.trim());
                             
@@ -356,7 +380,6 @@
                     });
                 }
 
-                // CUMA TUNJUK BUTANG KEMASKINI KALAU ADA DATA LEWAT
                 let butangTindakan = "";
                 if (statusSelesai && bilLewat !== "-" && bilLewat > 0) {
                     butangTindakan = `
@@ -385,7 +408,7 @@
         }
 
         // ==========================================
-        // LOGIK MODAL
+        // LOGIK MODAL ISI MURID
         // ==========================================
 
         function periksaAlasanLain() {
@@ -442,7 +465,6 @@
             
             document.getElementById('tajukModal').innerText = "KEMASKINI KELAS: " + kelas;
             
-            // Masukkan data lama ke dalam senarai sementara
             if (rekodHariIni[kelas] && rekodHariIni[kelas].namaArray && rekodHariIni[kelas].namaArray[0] !== "Tiada") {
                 rekodHariIni[kelas].namaArray.forEach((namaLengkap, i) => {
                     arrayMuridSementara.push({
@@ -563,7 +585,7 @@
                         kelas: kelasTargetKemaskini,
                         bilLewat: finalNamas.length,
                         namaLewat: finalNamas,
-                        alasan: finalAlasans.join(", "), // Rekod tulen dihantar ke Google Sheets
+                        alasan: finalAlasans.join(", "), 
                         alasanLain: ""
                     }
                 });
@@ -597,7 +619,7 @@
                             kelas: k,
                             bilLewat: existingNama.length,
                             namaLewat: existingNama,
-                            alasan: existingAlasan.join(", "), // Rekod tulen dihantar ke Google Sheets
+                            alasan: existingAlasan.join(", "), 
                             alasanLain: ""
                         }
                     });
@@ -626,6 +648,68 @@
                 sembunyiLoading();
                 console.error('Error!', err);
                 alert("Terdapat ralat semasa menghantar data. Sila semak sambungan internet.");
+            });
+        }
+
+        // ==========================================
+        // LOGIK MODAL PDF
+        // ==========================================
+
+        function bukaModalPDF() {
+            document.getElementById('tarikhPilihPDF').value = tarikhSemasaString; 
+            document.getElementById('modalPDF').style.display = 'flex';
+        }
+
+        function tutupModalPDF() {
+            document.getElementById('modalPDF').style.display = 'none';
+        }
+
+        function mulaJanaPDF() {
+            let tarikhPDF = document.getElementById('tarikhPilihPDF').value;
+            
+            if (!tarikhPDF) {
+                alert("Sila pilih tarikh laporan.");
+                return;
+            }
+            
+            if (tarikhPDF > tarikhHariIniSahaja) {
+                alert("Tarikh laporan tidak boleh melebihi tarikh hari ini.");
+                return;
+            }
+
+            tutupModalPDF();
+            tunjukLoading("SISTEM SEDANG MENJANA LAPORAN PDF,<br>SILA TUNGGU SEBENTAR...");
+
+            let dataPayload = {
+                action: 'janaPDF',
+                payload: { tarikh: tarikhPDF }
+            };
+
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(dataPayload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                sembunyiLoading();
+                
+                if(res.status === 'success') {
+                    const linkSource = `data:application/pdf;base64,${res.base64}`;
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = linkSource;
+                    downloadLink.download = res.fileName;
+                    downloadLink.click();
+                    
+                    tunjukSuccess("LAPORAN PDF BERJAYA DIMUAT TURUN<br>& DISIMPAN DALAM DRIVE!");
+                } else {
+                    alert("Ralat Penjanaan PDF: " + res.message);
+                }
+            })
+            .catch(err => {
+                sembunyiLoading();
+                console.error('Error PDF!', err);
+                alert("Terdapat ralat semasa memproses PDF. Sila cuba lagi.");
             });
         }
     </script>
