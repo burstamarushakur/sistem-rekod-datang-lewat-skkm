@@ -49,7 +49,6 @@
             text-transform: uppercase;
         }
 
-        /* Hilangkan icon calendar asal untuk date input supaya nampak kemas dengan FontAwesome */
         input[type="date"]::-webkit-calendar-picker-indicator {
             cursor: pointer;
             opacity: 0.6;
@@ -104,7 +103,6 @@
 
         <!-- STATS SECTION -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Card 1: Jumlah Lewat -->
             <div class="bg-red-50 rounded-2xl shadow-sm p-6 border border-red-100 flex flex-col justify-center items-center">
                 <p class="text-xs font-bold text-red-400 tracking-widest mb-2 uppercase">Jumlah Datang Lewat</p>
                 <div class="flex items-baseline gap-2 text-red-600">
@@ -112,7 +110,6 @@
                     <span class="text-sm font-bold text-red-400 ml-1 uppercase">Murid</span>
                 </div>
             </div>
-            <!-- Card 2: Peratus Lewat -->
             <div class="bg-amber-50 rounded-2xl shadow-sm p-6 border border-amber-100 flex flex-col justify-center items-center">
                 <p class="text-xs font-bold text-amber-500 tracking-widest mb-2 uppercase">% Datang Lewat</p>
                 <div class="flex items-baseline gap-2 text-amber-600">
@@ -176,7 +173,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">3. Pilih Alasan</label>
-                        <select id="modalPilihAlasan" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
+                        <select id="modalPilihAlasan" onchange="periksaAlasanLain()" class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
                             <option value="">-- Sila Pilih Alasan --</option>
                             <option value="Bangun lewat tidur">Bangun lewat tidur</option>
                             <option value="Kesesakan lalu lintas">Kesesakan lalu lintas</option>
@@ -191,6 +188,11 @@
                             <option value="Tidur lewat tugas">Tidur lewat urusan sekolah/keluarga</option>
                             <option value="Lain-lain">Lain-lain</option>
                         </select>
+                    </div>
+                    
+                    <!-- Kotak kalau pilih Lain-lain -->
+                    <div id="kotakLainLain" class="hidden">
+                        <input type="text" id="modalAlasanLain" placeholder="Sila nyatakan alasan..." class="w-full p-3 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none font-medium">
                     </div>
 
                     <button onclick="tambahKeSenarai()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 mt-2 rounded-lg transition-colors flex justify-center items-center gap-2 shadow-sm">
@@ -220,6 +222,7 @@
     </div>
 
     <script>
+        // JANGAN USIK SINI DAH
         const scriptURL = 'https://script.google.com/macros/s/AKfycbyTZOj4xNOrPUVIWMX7HepysLPFvbR3fGu_ACPE4CpwuPnwVVqKKjdHhjhn5xJZKmub/exec'; 
         
         let senaraiKelasGlobal = {}; 
@@ -245,7 +248,6 @@
             document.getElementById('datePicker').value = tarikhSemasaString;
         }
 
-        // Fungsi bila date picker ditukar
         function tukarTarikh() {
             tarikhSemasaString = document.getElementById('datePicker').value;
             muatTurunData();
@@ -275,11 +277,15 @@
                 rekodHariIni = {};
                 if(jsonRekod.status === 'success' && jsonRekod.data) {
                     jsonRekod.data.forEach(rekod => {
-                        // Match tarikh yang dipilih dari date picker
                         if(rekod.tarikh && rekod.tarikh.includes(tarikhSemasaString)) {
+                            // Asingkan data Alasan yang ditarik dari DB. DB simpan "Sebab 1, Sebab 2"
+                            let alasanDB = rekod.alasan || "";
+                            let arrayAlasan = alasanDB.split(',').map(a => a.trim());
+                            
                             rekodHariIni[rekod.kelas] = {
                                 bil: rekod.bilLewat,
-                                namaArray: rekod.namaLewat 
+                                namaArray: rekod.namaLewat,
+                                alasanArray: arrayAlasan
                             };
                         }
                     });
@@ -299,7 +305,6 @@
             let selectKelas = document.getElementById('modalPilihKelas');
             selectKelas.innerHTML = '<option value="">-- Sila Pilih Kelas --</option>';
             
-            // Custom sort: Pra dulu, baru nombor 1-6
             let keys = Object.keys(senaraiKelasGlobal).sort((a, b) => {
                 let isPraA = a.toUpperCase().startsWith("PRA");
                 let isPraB = b.toUpperCase().startsWith("PRA");
@@ -323,7 +328,6 @@
             let totalSemuaMurid = 0;
             let totalMuridLewat = 0;
 
-            // Custom sort: Pra dulu, baru nombor 1-6
             let keysKelas = Object.keys(senaraiKelasGlobal).sort((a, b) => {
                 let isPraA = a.toUpperCase().startsWith("PRA");
                 let isPraB = b.toUpperCase().startsWith("PRA");
@@ -338,6 +342,7 @@
                 let statusSelesai = rekodHariIni[kelas] ? true : false;
                 let bilLewat = statusSelesai ? rekodHariIni[kelas].bil : "-";
                 let listNama = statusSelesai ? rekodHariIni[kelas].namaArray : [];
+                let listAlasan = statusSelesai ? rekodHariIni[kelas].alasanArray : [];
 
                 if(statusSelesai && bilLewat !== "-" && bilLewat > 0) {
                     totalMuridLewat += parseInt(bilLewat);
@@ -345,9 +350,22 @@
 
                 let tagHTML = "";
                 if(statusSelesai && listNama.length > 0 && listNama[0] !== "Tiada") {
-                    listNama.forEach(nama => {
-                        tagHTML += `<span class="tag-murid shadow-sm">${nama}</span>`;
+                    listNama.forEach((nama, i) => {
+                        let sebab = listAlasan[i] ? ` (${listAlasan[i]})` : "";
+                        tagHTML += `<span class="tag-murid shadow-sm">${nama}${sebab}</span>`;
                     });
+                }
+
+                // CUMA TUNJUK BUTANG KEMASKINI KALAU ADA DATA LEWAT
+                let butangTindakan = "";
+                if (statusSelesai && bilLewat !== "-" && bilLewat > 0) {
+                    butangTindakan = `
+                        <button onclick="bukaModalKemaskini('${kelas}')" class="bg-slate-100 hover:bg-indigo-600 text-slate-600 hover:text-white text-xs font-bold py-2 px-4 rounded-full transition-all uppercase tracking-wider shadow-sm group-hover:bg-indigo-100 group-hover:text-indigo-700">
+                            Kemaskini
+                        </button>
+                    `;
+                } else {
+                    butangTindakan = `<span class="text-xs text-slate-300 italic">-</span>`;
                 }
 
                 let row = `
@@ -355,11 +373,7 @@
                         <td class="p-5 font-bold text-slate-700">${kelas}</td>
                         <td class="p-5 text-center text-lg font-extrabold ${statusSelesai && bilLewat > 0 ? 'text-red-500' : 'text-slate-400'}">${bilLewat}</td>
                         <td class="p-5 leading-relaxed">${tagHTML}</td>
-                        <td class="p-5 text-center">
-                            <button onclick="bukaModalKemaskini('${kelas}')" class="bg-slate-100 hover:bg-indigo-600 text-slate-600 hover:text-white text-xs font-bold py-2 px-4 rounded-full transition-all uppercase tracking-wider shadow-sm group-hover:bg-indigo-100 group-hover:text-indigo-700">
-                                Kemaskini
-                            </button>
-                        </td>
+                        <td class="p-5 text-center">${butangTindakan}</td>
                     </tr>
                 `;
                 tbody.innerHTML += row;
@@ -373,6 +387,15 @@
         // ==========================================
         // LOGIK MODAL
         // ==========================================
+
+        function periksaAlasanLain() {
+            let val = document.getElementById('modalPilihAlasan').value;
+            if(val === "Lain-lain") {
+                document.getElementById('kotakLainLain').classList.remove('hidden');
+            } else {
+                document.getElementById('kotakLainLain').classList.add('hidden');
+            }
+        }
 
         function pilihKelasDalamModal() {
             let kelasDipilih = document.getElementById('modalPilihKelas').value;
@@ -404,6 +427,8 @@
             
             document.getElementById('modalPilihNama').innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
             document.getElementById('modalPilihAlasan').value = "";
+            document.getElementById('modalAlasanLain').value = "";
+            document.getElementById('kotakLainLain').classList.add('hidden');
             
             renderTagDalamModal();
             document.getElementById('modalBorang').style.display = 'flex';
@@ -417,12 +442,14 @@
             
             document.getElementById('tajukModal').innerText = "KEMASKINI KELAS: " + kelas;
             
+            // Masukkan data lama ke dalam senarai sementara
             if (rekodHariIni[kelas] && rekodHariIni[kelas].namaArray && rekodHariIni[kelas].namaArray[0] !== "Tiada") {
                 rekodHariIni[kelas].namaArray.forEach((namaLengkap, i) => {
                     arrayMuridSementara.push({
                         id: Date.now() + i,
                         kelas: kelas,
-                        text: namaLengkap
+                        nama: namaLengkap,
+                        alasan: rekodHariIni[kelas].alasanArray[i] || ""
                     });
                 });
             }
@@ -433,6 +460,8 @@
             
             pilihKelasDalamModal(); 
             document.getElementById('modalPilihAlasan').value = "";
+            document.getElementById('modalAlasanLain').value = "";
+            document.getElementById('kotakLainLain').classList.add('hidden');
             
             renderTagDalamModal();
             document.getElementById('modalBorang').style.display = 'flex';
@@ -449,14 +478,17 @@
             let nama = document.getElementById('modalPilihNama').value;
             let alasan = document.getElementById('modalPilihAlasan').value;
 
+            if (alasan === "Lain-lain") {
+                let tulisLain = document.getElementById('modalAlasanLain').value;
+                if(tulisLain) alasan = tulisLain;
+            }
+
             if (!kelas || !nama || !alasan) {
                 alert("Sila lengkapkan pilihan Kelas, Nama dan Alasan!");
                 return;
             }
 
-            let teksGabungan = `${nama} (${alasan})`;
-
-            let wujud = arrayMuridSementara.find(item => item.kelas === kelas && item.text.startsWith(nama + " ("));
+            let wujud = arrayMuridSementara.find(item => item.kelas === kelas && item.nama === nama);
             if (wujud) {
                 alert("Murid ini telah direkodkan di bawah.");
                 return;
@@ -465,7 +497,8 @@
             arrayMuridSementara.push({
                 id: Date.now(),
                 kelas: kelas,
-                text: teksGabungan
+                nama: nama,
+                alasan: alasan
             });
 
             renderTagDalamModal();
@@ -477,6 +510,8 @@
                 document.getElementById('modalPilihNama').value = "";
             }
             document.getElementById('modalPilihAlasan').value = "";
+            document.getElementById('modalAlasanLain').value = "";
+            document.getElementById('kotakLainLain').classList.add('hidden');
         }
 
         function buangNamaDariModal(idToRemove) {
@@ -496,7 +531,7 @@
                 ruangan.innerHTML += `
                     <div class="flex items-center justify-between bg-white border border-slate-200 px-4 py-3 rounded-lg w-full shadow-sm">
                         <div class="text-sm font-semibold text-slate-700 leading-snug">
-                            <span class="text-indigo-600 font-extrabold mr-2">[${item.kelas}]</span> ${item.text}
+                            <span class="text-indigo-600 font-extrabold mr-2">[${item.kelas}]</span> ${item.nama} <span class="italic text-slate-500 font-normal">(${item.alasan})</span>
                         </div>
                         <button onclick="buangNamaDariModal(${item.id})" class="text-red-500 hover:bg-red-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
                             <i class="fas fa-times"></i>
@@ -507,7 +542,6 @@
         }
 
         function simpanRekodMuridLewat() {
-            // Membenarkan untuk simpan (update) array kosong sekiranya rekod kemaskini dipadam semua murid
             if (!modeKemaskini && arrayMuridSementara.length === 0) {
                 alert("Sila tambah murid dahulu sebelum menyimpan.");
                 return;
@@ -519,15 +553,17 @@
             let payloads = [];
 
             if (modeKemaskini) {
-                let latestNames = arrayMuridSementara.map(i => i.text);
+                let finalNamas = arrayMuridSementara.map(i => i.nama);
+                let finalAlasans = arrayMuridSementara.map(i => i.alasan);
+                
                 payloads.push({
                     action: 'simpanLewat',
                     payload: {
                         tarikh: tarikhSemasaString,
                         kelas: kelasTargetKemaskini,
-                        bilLewat: latestNames.length,
-                        namaLewat: latestNames,
-                        alasan: "Sila rujuk tag nama",
+                        bilLewat: finalNamas.length,
+                        namaLewat: finalNamas,
+                        alasan: finalAlasans.join(", "), // Rekod tulen dihantar ke Google Sheets
                         alasanLain: ""
                     }
                 });
@@ -535,18 +571,22 @@
                 let grouped = {};
                 arrayMuridSementara.forEach(item => {
                     if(!grouped[item.kelas]) grouped[item.kelas] = [];
-                    grouped[item.kelas].push(item.text);
+                    grouped[item.kelas].push(item);
                 });
 
                 for (let k in grouped) {
-                    let existing = [];
+                    let existingNama = [];
+                    let existingAlasan = [];
+                    
                     if(rekodHariIni[k] && rekodHariIni[k].namaArray && rekodHariIni[k].namaArray[0] !== "Tiada") {
-                        existing = [...rekodHariIni[k].namaArray];
+                        existingNama = [...rekodHariIni[k].namaArray];
+                        existingAlasan = [...rekodHariIni[k].alasanArray];
                     }
                     
                     grouped[k].forEach(newItem => {
-                        if(!existing.includes(newItem)) {
-                            existing.push(newItem);
+                        if(!existingNama.includes(newItem.nama)) {
+                            existingNama.push(newItem.nama);
+                            existingAlasan.push(newItem.alasan);
                         }
                     });
 
@@ -555,9 +595,9 @@
                         payload: {
                             tarikh: tarikhSemasaString,
                             kelas: k,
-                            bilLewat: existing.length,
-                            namaLewat: existing,
-                            alasan: "Sila rujuk tag nama",
+                            bilLewat: existingNama.length,
+                            namaLewat: existingNama,
+                            alasan: existingAlasan.join(", "), // Rekod tulen dihantar ke Google Sheets
                             alasanLain: ""
                         }
                     });
