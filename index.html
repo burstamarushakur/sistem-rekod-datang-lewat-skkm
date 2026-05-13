@@ -686,11 +686,28 @@
                 sembunyiLoading();
                 
                 if(res.status === 'success') {
-                    const linkSource = `data:application/pdf;base64,${res.base64}`;
+                    // Cara serasi iOS: Tukar Base64 kepada Blob URL
+                    const byteCharacters = atob(res.base64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {type: 'application/pdf'});
+                    
+                    const blobUrl = URL.createObjectURL(blob);
+                    
                     const downloadLink = document.createElement("a");
-                    downloadLink.href = linkSource;
+                    downloadLink.href = blobUrl;
                     downloadLink.download = res.fileName;
+                    
+                    // Wajib append masuk body untuk Safari iOS/Firefox kenal
+                    document.body.appendChild(downloadLink);
                     downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    // Bersihkan memory
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
                     
                     tunjukSuccess("LAPORAN PDF BERJAYA DIMUAT TURUN<br>& DISIMPAN DALAM DRIVE!");
                 } else {
