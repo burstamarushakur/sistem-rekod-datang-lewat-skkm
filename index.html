@@ -48,6 +48,12 @@
             margin: 0.25rem;
             text-transform: uppercase;
         }
+
+        /* Hilangkan icon calendar asal untuk date input supaya nampak kemas dengan FontAwesome */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-700">
@@ -79,13 +85,14 @@
             <div class="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
                 <img src="https://i.postimg.cc/SRD9WGqh/SKKM-3D.png" alt="Logo SKKM" class="w-24 h-auto drop-shadow-md">
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">DASHBOARD DATANG LEWAT SKKM</h1>
-                    <p class="text-slate-500 font-medium tracking-widest text-sm uppercase mt-1">UNIT HEM, MUAR JOHOR</p>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">DASHBOARD SISTEM REKOD DATANG LEWAT</h1>
+                    <p class="text-slate-500 font-bold tracking-widest text-sm mt-1 uppercase">SEKOLAH KEBANGSAAN KAMPUNG MEDAN</p>
                 </div>
             </div>
-            <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-inner">
-                <i class="far fa-calendar-alt text-xl"></i> 
-                <span id="displayDate" class="text-lg">--/--/----</span>
+            <!-- DATE PICKER -->
+            <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-3 rounded-xl font-bold flex items-center gap-3 shadow-inner hover:bg-indigo-100 transition-colors">
+                <i class="far fa-calendar-alt text-xl cursor-pointer" onclick="document.getElementById('datePicker').showPicker()"></i> 
+                <input type="date" id="datePicker" onchange="tukarTarikh()" class="bg-transparent border-none outline-none text-lg text-indigo-700 font-bold cursor-pointer">
             </div>
         </div>
 
@@ -124,7 +131,6 @@
                     <thead>
                         <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-white">
                             <th class="p-5 w-40">Nama Kelas</th>
-                            <th class="p-5 w-32 text-center">Status</th>
                             <th class="p-5 w-32 text-center">Bil Lewat</th>
                             <th class="p-5 min-w-[300px]">Nama Murid & Alasan</th>
                             <th class="p-5 w-40 text-center">Tindakan</th>
@@ -220,10 +226,9 @@
         let rekodHariIni = {}; 
         let tarikhSemasaString = ""; 
         
-        // Pembolehubah untuk Modal
         let modeKemaskini = false;
         let kelasTargetKemaskini = null;
-        let arrayMuridSementara = []; // format: { id: 123, kelas: '4B', text: 'NAMA (Alasan)' }
+        let arrayMuridSementara = []; 
 
         window.onload = function() {
             setTarikhHariIni();
@@ -237,7 +242,13 @@
             let yyyy = harini.getFullYear();
             
             tarikhSemasaString = yyyy + "-" + mm + "-" + dd;
-            document.getElementById('displayDate').innerText = dd + "/" + mm + "/" + yyyy;
+            document.getElementById('datePicker').value = tarikhSemasaString;
+        }
+
+        // Fungsi bila date picker ditukar
+        function tukarTarikh() {
+            tarikhSemasaString = document.getElementById('datePicker').value;
+            muatTurunData();
         }
 
         function tunjukLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
@@ -264,6 +275,7 @@
                 rekodHariIni = {};
                 if(jsonRekod.status === 'success' && jsonRekod.data) {
                     jsonRekod.data.forEach(rekod => {
+                        // Match tarikh yang dipilih dari date picker
                         if(rekod.tarikh && rekod.tarikh.includes(tarikhSemasaString)) {
                             rekodHariIni[rekod.kelas] = {
                                 bil: rekod.bilLewat,
@@ -286,7 +298,16 @@
         function isiDropdownKelasAwal() {
             let selectKelas = document.getElementById('modalPilihKelas');
             selectKelas.innerHTML = '<option value="">-- Sila Pilih Kelas --</option>';
-            let keys = Object.keys(senaraiKelasGlobal).sort();
+            
+            // Custom sort: Pra dulu, baru nombor 1-6
+            let keys = Object.keys(senaraiKelasGlobal).sort((a, b) => {
+                let isPraA = a.toUpperCase().startsWith("PRA");
+                let isPraB = b.toUpperCase().startsWith("PRA");
+                if (isPraA && !isPraB) return -1;
+                if (!isPraA && isPraB) return 1;
+                return a.localeCompare(b);
+            });
+
             keys.forEach(k => {
                 let opt = document.createElement('option');
                 opt.value = k;
@@ -302,10 +323,17 @@
             let totalSemuaMurid = 0;
             let totalMuridLewat = 0;
 
-            let keysKelas = Object.keys(senaraiKelasGlobal).sort();
+            // Custom sort: Pra dulu, baru nombor 1-6
+            let keysKelas = Object.keys(senaraiKelasGlobal).sort((a, b) => {
+                let isPraA = a.toUpperCase().startsWith("PRA");
+                let isPraB = b.toUpperCase().startsWith("PRA");
+                if (isPraA && !isPraB) return -1;
+                if (!isPraA && isPraB) return 1;
+                return a.localeCompare(b);
+            });
 
             keysKelas.forEach(kelas => {
-                totalSemuaMurid += senaraiKelasGlobal[kelas].length; // Kira total murid sekolah
+                totalSemuaMurid += senaraiKelasGlobal[kelas].length;
                 
                 let statusSelesai = rekodHariIni[kelas] ? true : false;
                 let bilLewat = statusSelesai ? rekodHariIni[kelas].bil : "-";
@@ -322,14 +350,9 @@
                     });
                 }
 
-                let statusBadge = statusSelesai 
-                    ? `<div class="flex flex-col items-center"><i class="fas fa-check-circle text-emerald-500 text-xl mb-1"></i><span class="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Selesai</span></div>` 
-                    : `<div class="flex flex-col items-center"><i class="fas fa-minus-circle text-slate-300 text-xl mb-1"></i><span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Belum</span></div>`;
-
                 let row = `
                     <tr class="hover:bg-slate-50 transition-colors group">
                         <td class="p-5 font-bold text-slate-700">${kelas}</td>
-                        <td class="p-5 text-center">${statusBadge}</td>
                         <td class="p-5 text-center text-lg font-extrabold ${statusSelesai && bilLewat > 0 ? 'text-red-500' : 'text-slate-400'}">${bilLewat}</td>
                         <td class="p-5 leading-relaxed">${tagHTML}</td>
                         <td class="p-5 text-center">
@@ -342,7 +365,6 @@
                 tbody.innerHTML += row;
             });
 
-            // Update Header Stats
             document.getElementById('statTotalLewat').innerText = totalMuridLewat;
             let peratus = totalSemuaMurid > 0 ? ((totalMuridLewat / totalSemuaMurid) * 100).toFixed(1) : 0;
             document.getElementById('statPeratusLewat').innerText = peratus + "%";
@@ -352,7 +374,6 @@
         // LOGIK MODAL
         // ==========================================
 
-        // Dipanggil bila dropdown kelas bertukar
         function pilihKelasDalamModal() {
             let kelasDipilih = document.getElementById('modalPilihKelas').value;
             let dropdownNama = document.getElementById('modalPilihNama');
@@ -370,7 +391,6 @@
             }
         }
 
-        // Buka untuk isi murid baru secara pukal
         function bukaModalTambahBaru() {
             modeKemaskini = false;
             kelasTargetKemaskini = null;
@@ -380,7 +400,7 @@
             
             let selectKelas = document.getElementById('modalPilihKelas');
             selectKelas.value = "";
-            selectKelas.disabled = false; // Boleh pilih kelas bebas
+            selectKelas.disabled = false; 
             
             document.getElementById('modalPilihNama').innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
             document.getElementById('modalPilihAlasan').value = "";
@@ -390,7 +410,6 @@
             document.body.style.overflow = 'hidden'; 
         }
 
-        // Buka untuk edit kelas spesifik (dari butang jadual)
         function bukaModalKemaskini(kelas) {
             modeKemaskini = true;
             kelasTargetKemaskini = kelas;
@@ -398,7 +417,6 @@
             
             document.getElementById('tajukModal').innerText = "KEMASKINI KELAS: " + kelas;
             
-            // Tarik rekod sedia ada masuk dalam list
             if (rekodHariIni[kelas] && rekodHariIni[kelas].namaArray && rekodHariIni[kelas].namaArray[0] !== "Tiada") {
                 rekodHariIni[kelas].namaArray.forEach((namaLengkap, i) => {
                     arrayMuridSementara.push({
@@ -411,9 +429,9 @@
             
             let selectKelas = document.getElementById('modalPilihKelas');
             selectKelas.value = kelas;
-            selectKelas.disabled = true; // Kunci supaya tak ter-edit kelas lain
+            selectKelas.disabled = true; 
             
-            pilihKelasDalamModal(); // Load senarai nama untuk kelas ni
+            pilihKelasDalamModal(); 
             document.getElementById('modalPilihAlasan').value = "";
             
             renderTagDalamModal();
@@ -438,7 +456,6 @@
 
             let teksGabungan = `${nama} (${alasan})`;
 
-            // Elak masukkan nama yang dah ada
             let wujud = arrayMuridSementara.find(item => item.kelas === kelas && item.text.startsWith(nama + " ("));
             if (wujud) {
                 alert("Murid ini telah direkodkan di bawah.");
@@ -453,13 +470,10 @@
 
             renderTagDalamModal();
 
-            // FLOW BALIK NO 1: Kosongkan borang untuk murid seterusnya
             if(!modeKemaskini) {
-                // Kalau mod pukal, kosongkan semua termasuk kelas
                 document.getElementById('modalPilihKelas').value = "";
                 document.getElementById('modalPilihNama').innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
             } else {
-                // Kalau mod kemaskini kelas, biarkan kelas tu
                 document.getElementById('modalPilihNama').value = "";
             }
             document.getElementById('modalPilihAlasan').value = "";
@@ -478,7 +492,6 @@
             }
             
             ruangan.innerHTML = '';
-            // Paparkan senarai secara terbalik (latest di atas)
             [...arrayMuridSementara].reverse().forEach(item => {
                 ruangan.innerHTML += `
                     <div class="flex items-center justify-between bg-white border border-slate-200 px-4 py-3 rounded-lg w-full shadow-sm">
@@ -494,6 +507,7 @@
         }
 
         function simpanRekodMuridLewat() {
+            // Membenarkan untuk simpan (update) array kosong sekiranya rekod kemaskini dipadam semua murid
             if (!modeKemaskini && arrayMuridSementara.length === 0) {
                 alert("Sila tambah murid dahulu sebelum menyimpan.");
                 return;
@@ -505,7 +519,6 @@
             let payloads = [];
 
             if (modeKemaskini) {
-                // Flow Kemaskini: Overwrite data khusus untuk kelas ini sahaja
                 let latestNames = arrayMuridSementara.map(i => i.text);
                 payloads.push({
                     action: 'simpanLewat',
@@ -519,7 +532,6 @@
                     }
                 });
             } else {
-                // Flow Pukal: Asingkan murid mengikut kelas dan cantum dengan data sedia ada di server
                 let grouped = {};
                 arrayMuridSementara.forEach(item => {
                     if(!grouped[item.kelas]) grouped[item.kelas] = [];
@@ -528,12 +540,10 @@
 
                 for (let k in grouped) {
                     let existing = [];
-                    // Ambil rekod lama kalau dah ada
                     if(rekodHariIni[k] && rekodHariIni[k].namaArray && rekodHariIni[k].namaArray[0] !== "Tiada") {
                         existing = [...rekodHariIni[k].namaArray];
                     }
                     
-                    // Masukkan budak baru (kalau belum ada)
                     grouped[k].forEach(newItem => {
                         if(!existing.includes(newItem)) {
                             existing.push(newItem);
@@ -559,7 +569,6 @@
                 return;
             }
 
-            // Hantar semua payload secara serentak (sesuai untuk pukal pelbagai kelas)
             Promise.all(payloads.map(p => 
                 fetch(scriptURL, {
                     method: 'POST',
